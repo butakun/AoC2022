@@ -8,14 +8,18 @@ fn main() {
     let filename = &args[1];
     let elves = read(filename).unwrap();
 
-    let mut totals: Vec<u32> = Vec::new();
-    for elf in elves.iter() {
-        let total: u32 = elf.iter().sum();
-        totals.push(total);
-    }
+    let mut total_cals: Vec<u32> = elves
+        .iter()
+        .map(|cals| cals.iter().sum())
+        .collect();
 
-    totals.sort();
-    let top_three_sum: u32 = totals.iter().rev().take(3).sum();
+    total_cals.sort();
+
+    let top_three_sum: u32 = total_cals
+        .iter()
+        .rev()
+        .take(3)
+        .sum();
     println!("{top_three_sum}");
 }
 
