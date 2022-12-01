@@ -15,8 +15,7 @@ fn main() {
     }
 
     totals.sort();
-    totals.reverse();
-    let top_three_sum: u32 = totals.iter().take(3).sum();
+    let top_three_sum: u32 = totals.iter().rev().take(3).sum();
     println!("{top_three_sum}");
 }
 
