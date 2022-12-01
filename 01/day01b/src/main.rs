@@ -14,15 +14,10 @@ fn main() {
         totals.push(total);
     }
 
-    let mut indices: Vec<(usize, u32)> = totals.into_iter().enumerate().collect();
-    indices.sort_by(|a, b| b.1.cmp(&a.1));
-
-    let mut total: u32 = 0;
-    for i in indices.iter().take(3) {
-        println!("{:?}", i);
-        total += i.1;
-    }
-    println!("{total}");
+    totals.sort();
+    totals.reverse();
+    let top_three_sum: u32 = totals.iter().take(3).sum();
+    println!("{top_three_sum}");
 }
 
 fn read(filename: &str) -> Result<Vec<Vec<u32>>, Box<dyn Error>> {
