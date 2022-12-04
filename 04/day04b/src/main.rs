@@ -8,13 +8,9 @@ fn main() {
     let pairs = read(filename);
     println!("{:?}", pairs);
 
-    let mut count: u32 = 0;
-    for pair in pairs {
-        if overlaps(&pair.0, &pair.1) {
-            count += 1;
-            println!("{:?} and {:?} overlaps", pair.0, pair.1);
-        }
-    }
+    let count = pairs.iter()
+        .filter(|pair| overlaps(&pair.0, &pair.1))
+        .count();
     println!("{count} pairs overlap");
 }
 
