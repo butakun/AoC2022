@@ -8,13 +8,10 @@ fn main() {
     let (mut stacks, moves) = read(filename);
 
     for (n, from, to) in moves {
-        let stack_from = stacks.iter_mut().nth(from - 1).unwrap();
-        let mut picked: Vec<char> = stack_from.iter().rev().take(n).cloned().collect();
-        stack_from.truncate(stack_from.len() - n);
-        let stack_to = stacks.iter_mut().nth(to - 1).unwrap();
-        for c in picked.iter().rev().cloned() {
-            stack_to.push(c);
-        }
+        let stack_from = &mut stacks[from - 1];
+        let mut remaining = stack_from.drain((stack_from.len() - n)..).collect();
+        let stack_to = &mut stacks[to - 1];
+        stack_to.append(&mut remaining);
         let buf: Vec<String> = stacks.iter().map(|stack| stack.into_iter().collect()).collect();
         println!("moved {n} from {from} to {to}: {:?}", buf);
     }
