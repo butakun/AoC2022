@@ -8,10 +8,12 @@ fn main() {
     let (mut stacks, moves) = read(filename);
 
     for (n, from, to) in moves {
-        for i in 0..n {
-            let stack_from = stacks.iter_mut().nth((from-1) as usize).unwrap();
-            let c = stack_from.pop().unwrap();
-            let stack_to = stacks.iter_mut().nth((to-1) as usize).unwrap();
+        println!("move {n} from {from} to {to}");
+        let stack_from = stacks.iter_mut().nth(from - 1).unwrap();
+        let mut picked: Vec<char> = stack_from.iter().rev().take(n).cloned().collect();
+        stack_from.truncate(stack_from.len() - n);
+        let stack_to = stacks.iter_mut().nth(to - 1).unwrap();
+        for c in picked.iter().rev().cloned() {
             stack_to.push(c);
         }
         println!("{:?}", stacks);
@@ -24,7 +26,7 @@ fn main() {
     println!("{code}");
 }
 
-fn read(filename: &str) -> (Vec<Vec<char>>, Vec<(u32, u32, u32)>) {
+fn read(filename: &str) -> (Vec<Vec<char>>, Vec<(usize, usize, usize)>) {
     let f = File::open(filename).unwrap();
     let mut reader = BufReader::new(f);
 
@@ -58,14 +60,14 @@ fn read(filename: &str) -> (Vec<Vec<char>>, Vec<(u32, u32, u32)>) {
 
     let f = File::open(filename).unwrap();
     reader = BufReader::new(f);
-    let moves: Vec<(u32, u32, u32)> = reader.lines()
+    let moves: Vec<(usize, usize, usize)> = reader.lines()
         .skip(max_height + 1 + 1)
         .map(|line| {
             let line = line.unwrap();
             let tokens: Vec<String> = line.trim().split(" ").map(|s| String::from(s)).collect();
-            let n = tokens.iter().nth(1).unwrap().parse::<u32>().unwrap();
-            let from = tokens.iter().nth(3).unwrap().parse::<u32>().unwrap();
-            let to = tokens.iter().nth(5).unwrap().parse::<u32>().unwrap();
+            let n = tokens.iter().nth(1).unwrap().parse::<usize>().unwrap();
+            let from = tokens.iter().nth(3).unwrap().parse::<usize>().unwrap();
+            let to = tokens.iter().nth(5).unwrap().parse::<usize>().unwrap();
             (n, from, to)
         })
         .collect();
