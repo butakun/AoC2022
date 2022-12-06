@@ -7,15 +7,21 @@ fn main() {
     let filename = &args[1];
     let (mut stacks, moves) = read(filename);
 
-    for (n, from, to) in moves {
+    let ops = moves.len();
+
+    for (count, (n, from, to)) in moves.into_iter().enumerate() {
         for i in 0..n {
             let stack_from = stacks.iter_mut().nth(from-1).unwrap();
             let c = stack_from.pop().unwrap();
             let stack_to = stacks.iter_mut().nth(to-1).unwrap();
             stack_to.push(c);
         }
-        let buf: Vec<String> = stacks.iter().map(|stack| stack.into_iter().collect()).collect();
-        println!("moved {n} from {from} to {to}: {:?}", buf);
+        //let buf: Vec<String> = stacks.iter().map(|stack| stack.into_iter().collect()).collect();
+        //let vis = visual(stacks, n, from, to);
+        //println!("moved {n} from {from} to {to}: {:?}", buf);
+        if count % 1000 == 0 {
+            println!("{count} / {ops}: moved {n} from {from} to {to}");
+        }
     }
 
     let mut code = String::new();
@@ -24,6 +30,19 @@ fn main() {
     }
     println!("{code}");
 }
+
+/*
+fn visual(stacks: &Vec<Vec<char>>, n: usize, from: usize, to: usize) -> String {
+    let buf = stacks.iter()
+        .enumerate()
+        .map(|(i, stack)| {
+            match i {
+                to => {
+                    let mut b = String::new();
+                    write!(b, "[{}]", stack.into_},
+                _ => stack.into_iter().collect()
+}
+*/
 
 fn read(filename: &str) -> (Vec<Vec<char>>, Vec<(usize, usize, usize)>) {
     let f = File::open(filename).unwrap();
