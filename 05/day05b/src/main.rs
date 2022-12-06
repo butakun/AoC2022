@@ -1,5 +1,5 @@
 use std::io::prelude::*;
-use std::io::{BufReader, SeekFrom};
+use std::io::BufReader;
 use std::fs::File;
 
 fn main() {
@@ -7,13 +7,18 @@ fn main() {
     let filename = &args[1];
     let (mut stacks, moves) = read(filename);
 
-    for (n, from, to) in moves {
+    let ops = moves.len();
+
+    for (count, (n, from, to)) in moves.into_iter().enumerate() {
         let stack_from = &mut stacks[from - 1];
         let mut remaining = stack_from.drain((stack_from.len() - n)..).collect();
         let stack_to = &mut stacks[to - 1];
         stack_to.append(&mut remaining);
-        let buf: Vec<String> = stacks.iter().map(|stack| stack.into_iter().collect()).collect();
-        println!("moved {n} from {from} to {to}: {:?}", buf);
+        //let buf: Vec<String> = stacks.iter().map(|stack| stack.into_iter().collect()).collect();
+        //println!("moved {n} from {from} to {to}: {:?}", buf);
+        if count % 1000 == 0 {
+            println!("{count} / {ops}: moved {n} from {from} to {to}");
+        }
     }
 
     let mut code = String::new();
