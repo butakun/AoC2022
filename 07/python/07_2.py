@@ -1,9 +1,9 @@
 from pprint import pprint
 
 
-def read(filename):
+def main(filename):
 
-    def read_dir(lines, path, tree, node):
+    def read_dir(lines, path, node):
         print(f"PATH {path}")
         pprint(f"TREE {tree}")
 
@@ -12,7 +12,6 @@ def read(filename):
             if tokens[0] == "$":
                 if tokens[1] == "cd":
                     if tokens[2] == "..":
-                        print("popping:", path)
                         path.pop()
                         node = node[".."]
                     else:
@@ -27,12 +26,11 @@ def read(filename):
                     node[tokens[1]] = {"..": node}
                 else:
                     node[tokens[1]] = int(tokens[0])
-                print("adding ", path[-1], " : ", tokens[1])
 
     lines = [l for l in open(filename)]
     path = []
     tree = {"/": {}, "..": None}
-    read_dir(lines, path, tree, tree)
+    read_dir(lines, path, tree)
     pprint(tree)
 
     def calc_size(node, book, path):
@@ -59,16 +57,9 @@ def read(filename):
     root = book["/"]
     total = 70000000
 
-    mini = total
-    for k, v in book.items():
-        available = total - root + v
-        if available >= 30000000 and v < mini:
-            print(k, v)
-            mini = v
-    print(mini)
-
-def main(filename):
-    read(filename)
+    candidates = [(k, v) for k, v in book.items() if (total - root + v) >= 30000000]
+    pprint(candidates)
+    print(min(candidates, key=lambda v:v[1]))
 
 
 if __name__ == "__main__":
