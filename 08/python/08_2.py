@@ -7,8 +7,7 @@ def view(g, jdim):
     for j in range(jdim):
         cansee = 0
         for jj in range(j+1, jdim):
-            if True or g[jj] <= g[j]:
-                cansee += 1
+            cansee += 1
             if g[jj] >= g[j]:
                 break
         vr[j] = cansee
@@ -16,8 +15,7 @@ def view(g, jdim):
     for j in range(jdim):
         cansee = 0
         for jj in range(j-1, -1, -1):
-            if True or g[jj] <= g[j]:
-                cansee += 1
+            cansee += 1
             if g[jj] >= g[j]:
                 break
         vl[j] = cansee
