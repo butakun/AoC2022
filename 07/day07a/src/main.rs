@@ -8,58 +8,44 @@ fn main() {
     println!("{:?}", fs);
 }
 
-struct FileSystem {
-    entries: HashMap<u32, Entry>,
-    next_inode: u32
-}
+fn read(filename: &str) -> HashMap<String, u32> {
+    let lines: Vec<String> = std::fs::read_to_string(filename).unwrap().trim().split("\n").map(|s| s.trim().to_string()).collect();
 
-impl FileSystem {
-    fn new() -> Self {
-        Self { entries: HashMap::new(), next_inode: 0 }
-    }
-}
-
-#[derive(Debug)]
-enum Entry {
-    File { name: String, next: Option<u32> },
-    Dir { name: String, next: Option<u32>, target: Option<u32>, last: Option<u32> },
-}
-
-fn append_entry_to_node(fs: &mut FileSystem, inode: u32, entry: Entry) {
-    let mut node = fs.entries.get(&inode).unwrap();
-    match node {
-        Entry::Dir{ name, next, target, last } => {
-            let new_inode = fs.next_inode;
-            fs.next_inode += 1;
-            if let Some(l) == last {
-                fs.entries.insert(new_inode, entry);
-                if let Entry::
-                fs.entries.get(l).unwrap().next = new_inode;
-            }
-        },
-        Entry::File { name, next } => panic!("{}", name),
-    };
-}
-
-fn read(filename: &str) -> HashMap<u32, Entry> {
-    let lines: Vec<String> = std::fs::read_to_string(filename).unwrap().split("\n").map(|s| s.trim().to_string()).collect();
-
-    let mut fs: HashMap<u32, Entry> = HashMap::new();
-
-    let mut node: u32 = 0;
-    fs.insert(node, Entry::Dir{ name: "".to_string(), next: None, target: None, last: None});
+    let mut fs: HashMap<String, u32> = HashMap::new();
+    let mut node: Vec<String> = Vec::new();
+    let mut size_this_dir: u32 = 0;
 
     for line in lines {
-        let tokens: Vec<&str> = line.split(" ").collect();
+        let tokens: Vec<&str> = line.trim().split(" ").collect();
+        println!("{:?}", tokens);
         match tokens[0] {
             "$" => match tokens[1] {
-                "cd" => {},
-                "ls" => {},
-                _ => panic!("{line}")
+                "cd" => {
+                    match tokens[2] {
+                        ".." => {
+                            let this_node = node.join("/");
+                            let this_node_size = fs.get(&this_node).unwrap();
+                            node.pop();
+                            fs.entry(node.join("/")).and_modify(|e| *e += this_node_size);
+                        },
+                        _ => { node.push(tokens[2].to_string()); }
+                    };
+                },
+                _ => {},
             },
-            "dir" => {},
-            _ => {}
-        }
+            "dir" => {
+                let new_node = format!("{}/{}", node.join("/"), tokens[1]);
+                fs.insert(new_node, 0);
+            },
+            file => {
+                let new_node = format!("{}/{}", node.join("/"), tokens[1]);
+                let size: u32 = tokens[0].parse().unwrap();
+                size_this_dir += size;
+                println!("inserting {new_node}, size {size}");
+                fs.insert(new_node, size);
+                fs.entry(node.join("/")).and_modify(|e| *e += size);
+            }
+        };
     }
 
     fs
