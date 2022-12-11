@@ -1,5 +1,4 @@
 from pprint import pprint
-from number import Number
 
 
 class Number(object):
