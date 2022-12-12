@@ -1,4 +1,4 @@
-from dijkstra import dijkstra
+from dijkstra import dijkstra, a_star, connected_component
 
 
 class Graph(object):
@@ -50,7 +50,17 @@ class Graph(object):
         return nei
 
 
-def main(filename):
+class HFunc(object):
+    def __init__(self, G):
+        self.G = G
+
+    def __call__(self, u):
+        di = self.G.goal[0] - u[0]
+        dj = self.G.goal[1] - u[1]
+        return abs(di) + abs(dj)
+
+
+def main(filename, method, debug):
     grid = [ [ c for c in line.strip() ] for line in open(filename) ]
 
     G = Graph(grid)
@@ -61,19 +71,34 @@ def main(filename):
             if grid[i][j] == "a" or  grid[i][j] == "S":
                 starts.append((i, j))
 
+    blacklist = set()
     paths = []
     for start in starts:
-        print(f"start = {start}:")
-        path, cost = dijkstra(G, start, G.goal, debug_freq=0)
+        if start in blacklist:
+            continue
+        if method == "dijkstra":
+            path, cost = dijkstra(G, start, G.goal, debug_freq=debug)
+        elif method == "astar":
+            path, cost = a_star(G, start, G.goal, HFunc(G), debug_freq=debug)
+        else:
+            raise ValueError(method)
         if path:
             paths.append((cost, path))
             print(f"start = {start}: {cost}, {len(path) - 1} steps")
         else:
-            print("didn't reach dest")
+            C = connected_component(G, start)
+            blacklist.update(C)
+            print(f"didn't reach dest, blacklisting {len(C)} nodes")
 
-    for cost, path in sorted(paths):
+    for cost, path in sorted(paths, reverse=True):
         print(f"{cost}, {len(path) - 1} steps")
 
+
 if __name__ == "__main__":
-    import sys
-    main(sys.argv[1])
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("input")
+    parser.add_argument("--method", default="dijkstra")
+    parser.add_argument("--debug", type=int, default=0)
+    args = parser.parse_args()
+    main(args.input, args.method, args.debug)

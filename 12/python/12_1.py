@@ -1,4 +1,4 @@
-from dijkstra import dijkstra
+from dijkstra import dijkstra, a_star
 
 
 class Graph(object):
@@ -45,20 +45,35 @@ class Graph(object):
         return nei
 
 
-def main(filename):
+class HFunc(object):
+    def __init__(self, G):
+        self.G = G
+
+    def __call__(self, u):
+        di = self.G.goal[0] - u[0]
+        dj = self.G.goal[1] - u[1]
+        return abs(di) + abs(dj)
+
+
+def main(filename, method, debug):
     grid = [ [ c for c in line.strip() ] for line in open(filename) ]
-    print(grid)
 
     G = Graph(grid)
 
-    print(G.start, G.goal)
-    print(G[G.start])
-    print("neighbors to 3, 2 = ", G[(3,2)])
-
-    path, cost = dijkstra(G, G.start, G.goal, debug_freq=1)
+    if method == "dijkstra":
+        path, cost = dijkstra(G, G.start, G.goal, debug_freq=debug)
+    elif method == "astar":
+        path, cost = a_star(G, G.start, G.goal, HFunc(G), debug_freq=debug)
+    else:
+        raise ValueError(method)
     print(f"{cost}, {path}, {len(path) - 1} steps")
 
 
 if __name__ == "__main__":
-    import sys
-    main(sys.argv[1])
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("input")
+    parser.add_argument("--method", default="astar")
+    parser.add_argument("--debug", type=int, default=0)
+    args = parser.parse_args()
+    main(args.input, args.method, args.debug)

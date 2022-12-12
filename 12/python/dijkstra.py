@@ -1,6 +1,6 @@
 import math
 import heapq
-from collections import defaultdict
+from collections import defaultdict, deque
 import itertools
 
 class PriorityQueue(object):
@@ -29,7 +29,7 @@ class PriorityQueue(object):
             if task is not self._removed_marker:
                 del self._tasks[task]
                 return task
-        raise KeyError("priority queue is empty")
+        raise IndexError("priority queue is empty")
 
     def __len__(self):
         return len(self._pq)
@@ -45,8 +45,11 @@ def dijkstra(G, src, dest, debug_freq=-1):
     pq.push(src, priority=D[src])
 
     iter = 0
-    while pq:
-        u = pq.pop()
+    while True:
+        try:
+            u = pq.pop()
+        except IndexError:
+            break
         iter += 1
         assert u is not None
 
@@ -68,8 +71,7 @@ def dijkstra(G, src, dest, debug_freq=-1):
                 pq.push(v, priority=dist_v)
 
     if dest not in came_from:
-        print("didn't reach dest")
-        return [], -1
+        return [], None
 
     path = [dest]
     while True:
@@ -94,8 +96,11 @@ def a_star(G, src, dest, H, debug_freq=-1):
 
     pq.push(src, priority=fScore[src])
     iter = 0
-    while pq:
-        u = pq.pop()
+    while True:
+        try:
+            u = pq.pop()
+        except IndexError:
+            break
         iter += 1
         if u == dest:
             break
@@ -116,6 +121,10 @@ def a_star(G, src, dest, H, debug_freq=-1):
                 came_from[v] = u
                 pq.push(v, priority=f_temp)
 
+    if dest not in came_from:
+        # didn't reach dest
+        return [], None 
+
     path = [dest]
     while True:
         prev = came_from[path[-1]]
@@ -125,6 +134,18 @@ def a_star(G, src, dest, H, debug_freq=-1):
 
     path.reverse()
     return path, gScore[dest]
+
+
+def connected_component(G, start, debug=0):
+    visited = set([start])
+    Q = deque([start])
+    while Q:
+        u = Q.popleft()
+        for v, _ in G[u]:
+            if v not in visited:
+                Q.append(v)
+                visited.add(v)
+    return set(visited)
 
 
 def test():
