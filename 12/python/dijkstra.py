@@ -47,7 +47,6 @@ def dijkstra(G, src, dest, debug_freq=-1):
     iter = 0
     while pq:
         u = pq.pop()
-        print(f"next u = {u}, pq = {len(pq)}")
         iter += 1
         assert u is not None
 
@@ -56,7 +55,6 @@ def dijkstra(G, src, dest, debug_freq=-1):
                 print(f"iter {iter}: D[u] = {D[u]}")
 
         if u == dest:
-            print(f"dest reached {u} == {dest}")
             break
         for v in G[u]:
             try:
@@ -68,6 +66,10 @@ def dijkstra(G, src, dest, debug_freq=-1):
                 D[v] = dist_v
                 came_from[v] = u
                 pq.push(v, priority=dist_v)
+
+    if dest not in came_from:
+        print("didn't reach dest")
+        return [], -1
 
     path = [dest]
     while True:
