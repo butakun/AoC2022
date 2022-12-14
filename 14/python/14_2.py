@@ -1,4 +1,5 @@
 import numpy as np
+from collections import deque
 
 
 class Cave(object):
@@ -7,26 +8,48 @@ class Cave(object):
         self.pmin = pmin
         self.pmax = pmax
 
-    def at(self, i, j):
-        ii = i - self.pmin[0]
-        jj = j - self.pmin[1]
+    def at(self, x, y):
+        ii = x - self.pmin[0]
+        jj = y - self.pmin[1]
         sh = self.grid.shape
         if ii < 0 or jj < 0 or ii >= sh[0] or jj >= sh[1]:
             return 0
         return self.grid[ii, jj]
 
-    def set(self, i, j, v):
-        ii = i - self.pmin[0]
-        jj = j - self.pmin[1]
+    def set(self, x, y, v):
+        ii = x - self.pmin[0]
+        jj = y - self.pmin[1]
         sh = self.grid.shape
         assert ii >= 0 and jj >= 0 and ii < sh[0] and jj < sh[1]
         self.grid[ii, jj] = v
 
-    def isinside(self, i, j):
-        ii = i - self.pmin[0]
-        jj = j - self.pmin[1]
+    def isinside(self, x, y):
+        ii = x - self.pmin[0]
+        jj = y - self.pmin[1]
         sh = self.grid.shape
         return ii >= 0 and jj >= 0 and ii < sh[0] and jj < sh[1]
+
+    def xy_to_ij(self, x, y):
+        ii = x - self.pmin[0]
+        jj = y - self.pmin[1]
+        return ii, jj
+
+    def ij_to_xy(self, i, j):
+        x = self.pmin[0] + i
+        y = self.pmin[1] + j
+        return x, y
+
+    def at_ij(self, i, j):
+        sh = self.grid.shape
+        assert i >= 0 and j >= 0 and i < sh[0] and j < sh[1]
+        return self.grid[i, j]
+
+    def __repr__(self):
+        buf = "\n".join(
+            ["".join([(lambda c: "." if c == 0 else "#" if c == 1 else "*")(c) for c in l]) for l in self.grid.T]
+            )
+        return buf
+
 
 def read(filename):
     with open(filename) as f:
@@ -84,6 +107,30 @@ def read(filename):
     return Cave(grid, pmin, pmax)
 
 
+"""
+def drop_sand(cave):
+    q = deque([[500, 0]])
+
+    iloop = 0
+    while q:
+        x, y = q.popleft()
+        for xc, yc in [[x, y+1], [x-1, y+1], [x+1, y+1]]:
+            if cave.isinside(xc, yc) and cave.at(xc, yc) == 0:
+                q.append([xc, yc])
+        if cave.at(x, y) != 0:
+            continue
+
+        i, j = cave.xy_to_ij(x, y)
+        j2 = np.where(cave.grid[i, j:] > 0)[0][0] + j
+        cave.grid[i, j:j2] = 2
+        
+        x2, y2 = cave.ij_to_xy(i, j2-1)
+        print(f"filled {x, y} - {x2, y2}")
+
+        iloop += 1
+"""
+
+
 def step(cave, sands, isand):
     if isand >= len(sands):
         # release new sand unit
@@ -124,24 +171,25 @@ def step(cave, sands, isand):
 
 def main(filename):
     cave = read(filename)
-    print(cave.grid.T)
+    print(cave)
 
     sands = []
     isand = 0
     ilastsand = -1
     i = 0
     while True:
-        print(f"Step {i}: isand = {isand}")
         ok = step(cave, sands, isand)
         if ok == "NOMORE":
             break
-        #print(cave.grid.T)
         if ok == "STUCK":
             ilastsand = isand
             isand += 1
+        if i % 10000 == 0:
+            print(f"{i}: {isand}")
         i += 1
 
-    print(cave.grid.T)
+
+    print(cave)
     print("last id = ", ilastsand)
     print("haw many = ", ilastsand + 1)
 
