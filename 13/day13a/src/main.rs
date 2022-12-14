@@ -28,6 +28,17 @@ fn main() {
     }
 }
 
+fn compare(left: Item, right: Item) -> u32 {
+    match (left, right) {
+        (Item::Scalar(s), Item::List(l)) => {
+            compare(Item::List(vec![left]), right)
+        }
+        (_, _) => {
+            0
+        }
+    }
+}
+
 fn read(filename: &str) -> Vec<(String, String)> {
     std::fs::read_to_string(filename).unwrap().trim()
         .split("\n\n")
