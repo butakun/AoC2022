@@ -1,3 +1,5 @@
+use std::slice::Iter;
+
 #[derive(Debug)]
 enum Item {
     Scalar(i32),
@@ -19,8 +21,10 @@ fn main() {
     println!("{pairs:?}");
 
     for pair in pairs {
-        let left = parse_list(&pair.0);
-        let right = parse_list(&pair.1);
+        let left = parse_line(&pair.0);
+        let right = parse_line(&pair.1);
+        println!("parsed left: {left:?}");
+        println!("parsed rifght: {right:?}");
     }
 }
 
@@ -35,32 +39,38 @@ fn read(filename: &str) -> Vec<(String, String)> {
         .collect()
 }
 
-fn parse_list(line: &String) {
-    let tokens = lex(line).unwrap();
-    println!("{tokens:?}");
+fn parse_list(token_iter: &mut Iter<Token>) -> Vec<Item> {
+    let mut list: Vec<Item> = vec![];
 
-    let mut stack: Vec<Item> = Vec::new();
-
-    let mut currentItem = Item::Scalar(0);
-    for token in tokens {
-        match &token {
-            BraceOpen => {
-                currentItem = Item::List(Vec::new());
-            }
-            BraceClose => {
-                let mut parent = stack.pop().unwrap();
-                if let Item::List(ref mut l) = parent {
-                    l.push(currentItem);
-                }
-                stack.push(parent);
-            }
+    loop {
+        let token = token_iter.next().unwrap();
+        match token {
             Token::Number(v) => {
-                if let Item::List(ref mut l) = currentItem {
-                    l.push(Item::Scalar(*v));
-                }
+                list.push(Item::Scalar(*v));
+            }
+            Token::BraceOpen => {
+                let item = Item::List(parse_list(token_iter));
+                list.push(item);
+            }
+            Token::BraceClose => {
+                break;
+            }
+            _ => {
             }
         }
     }
+    list
+}
+
+fn parse_line(line: &String) -> Item {
+    let tokens = lex(line).unwrap();
+    println!("{tokens:?}");
+
+    let mut tokens_iter = tokens.iter();
+
+    let first = tokens_iter.next().unwrap();
+    let items = parse_list(&mut tokens_iter);
+    Item::List(items)
 }
 
 fn lex(input: &String) -> Option<Vec<Token>> {
