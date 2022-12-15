@@ -38,36 +38,7 @@ def read(filename):
 
     sensors = np.array(sensors)
     beacons = np.array(beacons)
-    """
-    xymins = sensors.min(axis=0)
-    xyminb = beacons.min(axis=0)
 
-    ixmins = sensors[:, 0].argmin()
-    dxmins = dists[ixmins]
-    xmins = sensors[ixmins, 0] - dxmins
-
-    iymins = sensors[:, 1].argmin()
-    dymins = dists[iymins]
-    ymins = sensors[iymins, 1] - dymins
-
-    ixmaxs = sensors[:, 0].argmax()
-    dxmaxs = dists[ixmaxs]
-    xmaxs = sensors[ixmaxs, 0] + dxmaxs
-
-    iymaxs = sensors[:, 1].argmax()
-    dymaxs = dists[iymaxs]
-    ymaxs = sensors[iymaxs, 1] + dymaxs
-
-    xymin = np.array([xymins, xyminb]).min(axis=0)
-    xymin[0] = xmins
-    xymin[1] = ymins
-
-    xymaxs = sensors.max(axis=0)
-    xymaxb = beacons.max(axis=0)
-    xymax = np.array([xymaxs, xymaxb]).max(axis=0)
-    xymax[0] = xmaxs
-    xymax[1] = ymaxs
-    """
     xymin = np.array([xmin, ymin])
     xymax = np.array([xmax, ymax])
 
