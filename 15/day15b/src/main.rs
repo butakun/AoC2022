@@ -1,11 +1,16 @@
 use std::collections::{HashMap, HashSet, VecDeque};
+use rand::thread_rng;
+use rand::seq::SliceRandom;
 
 fn main() {
     let filename = std::env::args().skip(1).next().unwrap();
     let measured = read(&filename);
     println!("{measured:?}");
 
-    for iline in 0 .. 4000000 {
+    let mut ilines: Vec<i32> = (0 .. 4000000).collect();
+    ilines.shuffle(&mut thread_rng());
+
+    for iline in ilines {
         let ranges = check_line(&measured, iline);
         if ranges.len() > 1 {
             println!("fused: {ranges:?}");
