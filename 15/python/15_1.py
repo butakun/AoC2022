@@ -65,40 +65,42 @@ def read(filename):
     shape = xymax - xymin + np.array([1, 1])
     print("shape: ", shape)
 
-    grid = np.zeros(shape, np.uint8)
+    #grid = np.zeros(shape, np.uint8)
+
+    return shape, xymin, sensors, beacons, dists
+
+
+def main(filename, jcheck):
+    shape, xymin, sensors, beacons, dists = read(filename)
+
+    jcheck_ = jcheck - xymin[1]
+
+    line = np.zeros((shape[0]), np.uint8)
 
     for i in range(sensors.shape[0]):
         ps = sensors[i, :] - xymin
         pb = beacons[i, :] - xymin
-        d = np.abs(pb - ps).sum()
-        for dj, ii in enumerate(range(ps[0]-d, ps[0]+d+1)):
-            if ii < 0 or ii >= shape[0]:
-                continue
-            if dj > d:
-                dj = d - (dj - d)
-            for jj in range(ps[1]-dj, ps[1]+dj+1):
-                #print("idj: ", ii, jj, dj)
-                if jj < 0 or jj >= shape[1]:
-                    continue
-                grid[ii, jj] = 3
+        d = dists[i]
+        print(f"sensor {i}")
+        if abs(jcheck_ - ps[1]) > d:
+            continue
+        jj = jcheck_
+        di = d - abs(jj - ps[1])
+        ii = ps[0]
+        #grid[ii-di:ii+di+1, jj] = 3
+        line[ii-di:ii+di+1] = 3
 
     for i in range(sensors.shape[0]):
         ps = sensors[i, :] - xymin
         pb = beacons[i, :] - xymin
-        grid[ps[0], ps[1]] = 1
-        grid[pb[0], pb[1]] = 2
+        if ps[1] == jcheck_:
+            line[ps[0]] = 1
+        if pb[1] == jcheck_:
+            line[pb[0]] = 2
+        #grid[ps[0], ps[1]] = 1
+        #grid[pb[0], pb[1]] = 2
 
-    return grid, xymin
-
-
-def main(filename):
-    grid, xymin = read(filename)
-
-    print(grid[0-xymin[0]:25-xymin[0],0-xymin[1]:23-xymin[1]].T)
-
-    icheck = 10
-    icheck = 2000000
-    line = grid[icheck - xymin[0], :]
+    #line = grid[:, jcheck_]
 
     print(line)
     print((line == 3).sum() + (line == 1).sum())
@@ -106,4 +108,4 @@ def main(filename):
 
 if __name__ == "__main__":
     import sys
-    main(sys.argv[1])
+    main(sys.argv[1], int(sys.argv[2]))
