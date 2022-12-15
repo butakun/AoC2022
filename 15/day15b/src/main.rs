@@ -8,9 +8,8 @@ fn main() {
     println!("{measured:?}");
 
     let mut ilines: Vec<i32> = (0 .. 4000000).collect();
-    ilines.shuffle(&mut thread_rng());
+    //ilines.shuffle(&mut thread_rng());
 
-    //for iline in 0 ..= 4000000 {
     for iline in ilines {
         let ranges = check_line(&measured, iline);
         if ranges.len() > 1 {
@@ -49,7 +48,6 @@ fn union(ranges: &Vec<(i32, i32)>) -> Vec<(i32, i32)> {
         for i2 in i1+1 .. n {
             let r2 = ranges[i2];
             if overlaps(&r1, &r2) {
-                //println!("{i1}:{r1:?} and {i2}:{r2:?} overlaps");
                 graph.entry(i1).or_insert(Vec::new()).push(i2);
                 graph.entry(i2).or_insert(Vec::new()).push(i1);
             }
