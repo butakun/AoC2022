@@ -8,6 +8,7 @@ def read(filename):
     sensors = []
     beacons = []
     dists = []
+    xmin, ymin, xmax, ymax = 0, 0, 0, 0
     for line in lines:
         x = line.split()[2]
         y = line.split()[3]
@@ -26,11 +27,17 @@ def read(filename):
         d = np.abs(np.array(pb) - np.array(ps)).sum()
         dists.append(d)
 
+        xmin = min(xmin, ps[0] - d)
+        xmax = max(xmax, ps[0] + d)
+        ymin = min(ymin, ps[1] - d)
+        ymax = max(ymax, ps[1] + d)
+
     print(sensors)
     print(beacons)
 
     sensors = np.array(sensors)
     beacons = np.array(beacons)
+    """
     xymins = sensors.min(axis=0)
     xyminb = beacons.min(axis=0)
 
@@ -59,6 +66,9 @@ def read(filename):
     xymax = np.array([xymaxs, xymaxb]).max(axis=0)
     xymax[0] = xmaxs
     xymax[1] = ymaxs
+    """
+    xymin = np.array([xmin, ymin])
+    xymax = np.array([xmax, ymax])
 
     print("xymin: ", xymin)
     print("xymax: ", xymax)
@@ -103,7 +113,11 @@ def main(filename, jcheck):
     #line = grid[:, jcheck_]
 
     print(line)
-    print((line == 3).sum() + (line == 1).sum())
+    n_sensors = (line == 1).sum()
+    n_beacons = (line == 2).sum()
+    n_voids = (line == 3).sum()
+    print(f"sensors {n_sensors}, beacons {n_beacons}, voids = {n_voids}")
+    print(n_voids + n_sensors)
 
 
 if __name__ == "__main__":
