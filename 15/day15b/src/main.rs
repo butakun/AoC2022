@@ -1,18 +1,14 @@
 use std::collections::{HashMap, HashSet, VecDeque};
-use rand::thread_rng;
-use rand::seq::SliceRandom;
 
 fn main() {
     let filename = std::env::args().skip(1).next().unwrap();
     let measured = read(&filename);
     println!("{measured:?}");
 
-    let mut ilines: Vec<i32> = (0 .. 4000000).collect();
-    //ilines.shuffle(&mut thread_rng());
-
-    for iline in ilines {
+    for iline in 0 .. 4000000 {
         let ranges = check_line(&measured, iline);
         if ranges.len() > 1 {
+            println!("fused: {ranges:?}");
             let ihole = ranges[0].1 + 1;
             let freq = (ihole as u64) * 4000000 + iline as u64;
             println!("({ihole}, {iline}) freq = {freq}");
@@ -36,7 +32,28 @@ fn check_line(measured: &Vec<((i32, i32), (i32, i32), i32)>, check_line: i32) ->
         ranges.push(range);
     }
 
-    union(&ranges)
+    //union(&ranges)
+    fuse(&mut ranges)
+}
+
+fn fuse(ranges: &mut Vec<(i32, i32)>) -> Vec<(i32, i32)> {
+    ranges.sort();
+
+    let mut fused_ranges: Vec<(i32, i32)> = vec![];
+
+    let mut prev = ranges[0];
+    for i in 1 .. ranges.len() {
+        let (start, end) = ranges[i];
+        if start <= (prev.1 + 1) {
+            prev.1 = std::cmp::max(prev.1, end);
+        } else {
+            fused_ranges.push(prev);
+            prev = (start, end);
+        }
+    }
+    fused_ranges.push(prev);
+
+    fused_ranges
 }
 
 fn union(ranges: &Vec<(i32, i32)>) -> Vec<(i32, i32)> {
