@@ -20,18 +20,58 @@ fn main() {
     let pairs = read(&filename);
     println!("{pairs:?}");
 
-    for pair in pairs {
+    let mut sum = 0;
+    for (i, pair) in pairs.into_iter().enumerate() {
         let left = parse_line(&pair.0);
         let right = parse_line(&pair.1);
         println!("parsed left: {left:?}");
         println!("parsed rifght: {right:?}");
+        let c = compare(&left, &right);
+        println!("compare = {c}");
+        if c == 1 {
+            println!("Pair {} is correct.", i+1);
+            sum += i + 1;
+        }
     }
+    println!("sum = {sum}");
 }
 
-fn compare(left: Item, right: Item) -> u32 {
+fn compare(left: &Item, right: &Item) -> i32 {
     match (left, right) {
         (Item::Scalar(s), Item::List(l)) => {
-            compare(Item::List(vec![left]), right)
+            compare(&Item::List(vec![Item::Scalar(*s)]), right)
+        }
+        (Item::List(l), Item::Scalar(s)) => {
+            compare(left, &Item::List(vec![Item::Scalar(*s)]))
+        }
+        (Item::Scalar(l), Item::Scalar(r)) => {
+            if l == r {
+                0
+            } else if l < r {
+                1
+            } else {
+                -1
+            }
+        }
+        (Item::List(l), Item::List(r)) => {
+            let mut c: i32 = 0;
+            for i in 0 .. std::cmp::min(l.len(), r.len()) {
+                c = compare(&l[i], &r[i]);
+                if c != 0 {
+                    break;
+                }
+            }
+            if c == 0 {
+                if l.len() == r.len() {
+                    0
+                } else if l.len() < r.len() {
+                    1
+                } else {
+                    -1
+                }
+            } else {
+                c
+            }
         }
         (_, _) => {
             0
@@ -75,7 +115,6 @@ fn parse_list(token_iter: &mut Iter<Token>) -> Vec<Item> {
 
 fn parse_line(line: &String) -> Item {
     let tokens = lex(line).unwrap();
-    println!("{tokens:?}");
 
     let mut tokens_iter = tokens.iter();
 
