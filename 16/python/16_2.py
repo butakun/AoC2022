@@ -1,6 +1,6 @@
 from dijkstra import dijkstra, dijkstra2
 from collections import defaultdict
-from itertools import permutations
+from itertools import product, permutations
 
 
 class ActionNode(object):
@@ -23,17 +23,67 @@ class ActionGraph(object):
         self.network = network
         self.good_valves = [ k for k, v in Qgas.items() if v > 0 ]
         self.Qgas = Qgas
+        self.valves = [ k for k in Qgas.keys() ]
 
     def next_actions(self, u, cost, cost_min):
         actions = []
 
-        cost_improvement = 0
         still_closed = [ v for v in self.good_valves if u.valves[v] == False ]
+
+        cost_potential = 0
+        for closed_valve in still_closed:
+            cost_potential += self.Qgas[closed_valve] * (u.time_remaining - 1)
+        if cost - cost_potential > cost_min:
+            return actions
+
+        targets_1 = [ self.network[u.valve1][closed_valve][1][1] for closed_valve in still_closed if closed_valve != u.valve1 ]
+        targets_2 = [ self.network[u.valve2][closed_valve][1][1] for closed_valve in still_closed if closed_valve != u.valve2 ]
+        targets_1.append(u.valve1)
+        targets_2.append(u.valve2)
+
+        for t1, t2 in product(targets_1, targets_2):
+            if t1 == t2:
+                continue
+            if u.valve1 == t1 and t1 not in still_closed:
+                continue
+            if u.valve2 == t2 and t2 not in still_closed:
+                continue
+
+            valves_next = u.valves.copy()
+            if u.valve1 == t1 and u.valve2 != t2:
+                valves_next[t1] = True
+                action_next = ActionNode(t1, t2, u.time_remaining - 1, valves_next)
+                cost = self.Qgas[t1] * (u.time_remaining - 1)
+            elif u.valve1 != t1 and u.valve2 == t2:
+                valves_next[t2] = True
+                action_next = ActionNode(t1, t2, u.time_remaining - 1, valves_next)
+                cost = self.Qgas[t2] * (u.time_remaining - 1)
+            elif u.valve1 == t1 and u.valve2 == t2:
+                valves_next[t1] = True
+                valves_next[t2] = True
+                action_next = ActionNode(t1, t2, u.time_remaining - 1, valves_next)
+                cost = (self.Qgas[t1] + self.Qgas[t2]) * (u.time_remaining - 1)
+            else:
+                action_next = ActionNode(t1, t2, u.time_remaining - 1, valves_next)
+                cost = 0
+
+            actions.append((action_next, -cost))
+
+        return actions
+
+
+    def next_actions2(self, u, cost, cost_min):
+        actions = []
+
+        still_closed = [ v for v in self.good_valves if u.valves[v] == False ]
+        """
+        cost_improvement = 0
         for v in still_closed:
             cost_improvement -= self.Qgas[v] * u.time_remaining
         cost_possible = cost + cost_improvement
         if cost_min < cost_possible:
             return actions
+        """
 
         if u.valve1 in still_closed:
             # we open valve 1 first

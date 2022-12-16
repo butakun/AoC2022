@@ -133,7 +133,7 @@ def dijkstra2(G, src, f_is_dest, debug_freq=-1):
     return path, D[dest]
 
 
-def a_star(G, src, dest, H, debug_freq=-1):
+def a_star2(G, src, debug_freq=-1):
     pq = PriorityQueue()
     came_from = {src: None}
 
@@ -141,8 +141,9 @@ def a_star(G, src, dest, H, debug_freq=-1):
     fScore = defaultdict(lambda:math.inf)
     
     gScore[src] = 0
-    fScore[src] = H(src)
+    fScore[src] = G.HFunc(src)
 
+    g_best = 0
     pq.push(src, priority=fScore[src])
     iter = 0
     while True:
@@ -151,30 +152,27 @@ def a_star(G, src, dest, H, debug_freq=-1):
         except IndexError:
             break
         iter += 1
-        if u == dest:
-            break
 
         if debug_freq > 0 and iter % debug_freq == 0:
-            print(f"iter {iter}: gScore[u] = {gScore[u]}, fScore[u] = {fScore[u]}")
+            print(f"iter {iter}: {g_best}, gScore[u] = {gScore[u]}, fScore[u] = {fScore[u]}")
 
-        for v in G[u]:
-            try:
+        for v in G.next_actions(u):
+            if isinstance(v, tuple):
                 v, weight = v[0], v[1]
-            except:
+            else:
                 weight = 1
             g_temp = gScore[u] + weight
+            if g_temp < g_best:
+                best = v
+                g_best = g_temp
             if g_temp < gScore[v]:
-                f_temp = g_temp + H(v)
+                f_temp = g_temp + G.HFunc(v)
                 gScore[v] = g_temp
                 fScore[v] = f_temp
                 came_from[v] = u
                 pq.push(v, priority=f_temp)
 
-    if dest not in came_from:
-        # didn't reach dest
-        return [], None 
-
-    path = [dest]
+    path = [best]
     while True:
         prev = came_from[path[-1]]
         if prev is None:
@@ -182,7 +180,7 @@ def a_star(G, src, dest, H, debug_freq=-1):
         path.append(prev)
 
     path.reverse()
-    return path, gScore[dest]
+    return path, gScore[best]
 
 
 def connected_component(G, start, debug=0):
