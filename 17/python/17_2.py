@@ -29,6 +29,7 @@ SHAPES = [
 ]
 
 import numpy as np
+from pprint import pprint
 
 def build_shapes():
     blocks = []
@@ -37,15 +38,7 @@ def build_shapes():
         block = np.flip(np.array(block), axis=0)
         blocks.append(block)
     
-    # profile shape. each is [bottom, top]
-    profiles = [
-            [[0,0,0,0], [0,0,0,0]],
-            [[1,0,1], [1,0,1]],
-            [[0,0,0], [2,2,0]],
-            [[0], [0]],
-            [[0,0], [0,0]]
-            ]
-    return blocks, profiles
+    return blocks
 
 
 def read_wind(filename):
@@ -136,20 +129,41 @@ class Grid(object):
             print("".join(["." if c == 0 else "#" if c == 1 else "@" for c in line]))
 
 
-def check_pattern(iblock, grid, shape, pos, winds, time):
+def check_pattern(iblock, grid, shape, pos, winds, time, log):
+    verdict = False
     ch = grid.column_height()
-    print(f"CHECKING PATTERN: iblock {iblock}, time {time}, {time % len(winds)}, ch {ch}: {grid.grid[ch-1,:]}")
+    wind_index = time % len(winds)
+    top = grid.grid[ch-1,:].tolist()
+    print(f"CHECKING PATTERN: iblock {iblock}, time {time}, {wind_index}, ch {ch}: {top}")
+    wind_indices = log["wind_indices"]
+    if wind_index in wind_indices:
+        print(f"FOUND REPEATED wind index {wind_index}")
+        if wind_index in log["pattern_detected_at"]:
+            verdict = True
+        else:
+            log["pattern_detected_at"].append(wind_index)
+        #grid.show()
+    wind_indices.append(wind_index)
+    log["log"].append({
+        "iblock": iblock,
+        "time": time,
+        "wind_index": wind_index,
+        "column_height": ch,
+        "top": top,
+        })
+    return verdict
 
 
 def main(filename):
     winds = read_wind(filename)
-    shapes, profiles = build_shapes()
+    shapes = build_shapes()
 
     n_lines = 50000
     grid = Grid(initial_height=n_lines)
 
     grid.show()
 
+    log = {"wind_indices": [], "pattern_detected_at": [], "log": []}
     iblock = 0
     delta_x = np.array([0, 1])
     delta_y = np.array([1, 0])
@@ -157,7 +171,7 @@ def main(filename):
     pos = np.array([3, 2])
     print(f"initial pos = {pos}")
     time = 0
-    check_pattern(iblock, grid, shape, pos, winds, time)
+    verdict = check_pattern(iblock, grid, shape, pos, winds, time, log)
     while True:
         # wind
         wind = winds[time % len(winds)]
@@ -189,7 +203,7 @@ def main(filename):
             shape = shapes[iblock % len(shapes)]
             pos = np.array([grid.column_height() + 3, 2])
             if iblock % len(shapes) == 0:
-                check_pattern(iblock, grid, shape, pos, winds, time)
+                verdict = check_pattern(iblock, grid, shape, pos, winds, time, log)
             if iblock % 1000 == 0:
                 print(f"#### new rock {iblock} at {pos}")
             #grid.show(shape, pos)
@@ -199,16 +213,41 @@ def main(filename):
                 grid.move_grid()
                 #grid.show(shape, pos)
 
-            if iblock >= 10000:
+            if verdict or iblock >= 10000:
                 break
         #print(f"after fall, pos = {pos}, column at {grid.column_height()}")
 
         time += 1
 
-    vf = grid.find_new_virtual_floor()
-    print("virtual floor = ", vf)
-    print("column height =", grid.column_height(), grid._column_height)
-    grid.show(shape, pos)
+    # Postprocess
+    N = 1000000000000
+    wind_index = log["pattern_detected_at"][0]
+    pattern_entries = [ entry for entry in log["log"] if entry["wind_index"] == wind_index ]
+    for p in pattern_entries:
+        print(p)
+    blocks_period = pattern_entries[1]["iblock"] - pattern_entries[0]["iblock"]
+    column_height_period = pattern_entries[1]["column_height"] - pattern_entries[0]["column_height"]
+    prelude_column_height = pattern_entries[0]["column_height"]
+    prelude_blocks = pattern_entries[0]["iblock"]
+    print("prelude column height = ", prelude_column_height)
+    print("prelude blocks = ", prelude_blocks)
+
+    multiples = (N - prelude_blocks) // blocks_period
+    remainder_blocks = (N - prelude_blocks) % blocks_period
+    print("remainder blocks = ", remainder_blocks)
+
+    remainder_column_height = [
+            e for e in log["log"]
+            if e["iblock"] == (remainder_blocks + prelude_blocks)
+            ][0]["column_height"] - prelude_column_height
+    print("blocks period = ", blocks_period)
+    print("column height preiod = ", column_height_period)
+    print("multiples = ", multiples)
+    print("prelude column height = ", prelude_column_height)
+    print("remainder column height = ", remainder_column_height)
+    answer = prelude_column_height + column_height_period * multiples + remainder_column_height
+    print(f"column height after {N} blocks = ", answer)
+
 
 if __name__ == "__main__":
     import sys
