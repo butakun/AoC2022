@@ -133,16 +133,18 @@ def check_pattern(iblock, grid, shape, pos, winds, time, log):
     verdict = False
     ch = grid.column_height()
     wind_index = time % len(winds)
-    top = grid.grid[ch-1,:].tolist()
+    top = grid.grid[ch-1,:].copy()
     print(f"CHECKING PATTERN: iblock {iblock}, time {time}, {wind_index}, ch {ch}: {top}")
     wind_indices = log["wind_indices"]
     if wind_index in wind_indices:
-        print(f"FOUND REPEATED wind index {wind_index}")
-        if wind_index in log["pattern_detected_at"]:
-            verdict = True
-        else:
-            log["pattern_detected_at"].append(wind_index)
-        #grid.show()
+        log_index = log["wind_index_to_log_index"][wind_index]
+        log_prev = log["log"][log_index]
+        if np.all(log_prev["top"] == top):
+            print(f"FOUND REPEATED wind index {wind_index} and identical column top {top}")
+            if wind_index in log["pattern_detected_at"]:
+                verdict = True
+            else:
+                log["pattern_detected_at"].append(wind_index)
     wind_indices.append(wind_index)
     log["log"].append({
         "iblock": iblock,
@@ -151,6 +153,7 @@ def check_pattern(iblock, grid, shape, pos, winds, time, log):
         "column_height": ch,
         "top": top,
         })
+    log["wind_index_to_log_index"][wind_index] = len(log["log"]) - 1
     return verdict
 
 
@@ -163,7 +166,7 @@ def main(filename):
 
     grid.show()
 
-    log = {"wind_indices": [], "pattern_detected_at": [], "log": []}
+    log = {"wind_indices": [], "wind_index_to_log_index": {}, "pattern_detected_at": [], "log": []}
     iblock = 0
     delta_x = np.array([0, 1])
     delta_y = np.array([1, 0])
