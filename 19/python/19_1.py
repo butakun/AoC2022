@@ -1,4 +1,68 @@
-import re
+import numpy as np
+
+
+class ActionNode(object):
+    def __init__(self, state):
+        self.state = state
+    def __hash__(self):
+        return hash(self.state.tobytes())
+    def __repr__(self):
+        return repr(self.state)
+    def __str__(self):
+        return str(self.state)
+
+class ActionGraph(object):
+    def __init__(self, recipe, minutes):
+        self.recipe = recipe
+        self.minutes = minutes
+        self.kinds = ["ore", "clay", "obsidian", "geode"]
+
+        recipe_matrix = np.zeros((len(self.kinds), len(self.kinds)), np.int32)
+        for robot, ingredients in self.recipe.items():
+            i = self.kinds.index(robot)
+            for rock, count in ingredients.items():
+                j = self.kinds.index(rock)
+                recipe_matrix[i, j] = count
+        self.recipe_matrix = recipe_matrix
+
+    def __getitem__(self, u):
+        actions = []
+
+        # where you build one kind of robot
+        can_build = []
+        for kind in [3, 2, 1, 0]:
+            if np.all(u.state[:4] >= self.recipe_matrix[kind, :]):
+                can_build.append(kind)
+
+        if can_build:
+            build = can_build[:4]
+        else:
+            build = []
+        """
+        build = None
+        if u.state[7] == 0:
+            if u.state[6] == 0:
+                if u.state[5] == 0:
+                    build = 1  # clay
+                else:
+                    build = 2  # obs
+            else:
+                build = 3 # geode
+        """
+
+        for kind in build:
+            next_state = u.state.copy()
+            next_state[:4] -= self.recipe_matrix[kind, :]
+            next_state[4+kind] += 1
+            next_state[:4] += u.state[4:]
+            actions.append(ActionNode(next_state))
+
+        # where you don't build anything, just collect rocks
+        next_state = u.state.copy()
+        next_state[:4] += u.state[4:]
+        actions.append(ActionNode(next_state))
+
+        return actions
 
 
 def read(filename):
@@ -25,19 +89,18 @@ def read(filename):
     return recipes, robots, resources
 
 
-def do_recipe(recipe, robot_names, resource_names):
+def do_recipe(recipe, robot_names, resource_names, minutes):
     robots = { r: 1 if r == "ore" else 0 for r in robot_names }
     resources = { r: 0 for r in resource_names }
     resources["geode"] = 0
 
-    print(robots)
-    print(resources)
-
-    for minute in range(10):
+    for minute in range(minutes):
         existing_robots = robots.copy()
         while True:
             built_a_robot = False
-            for robot, ingredients in recipe.items():
+            #for robot, ingredients in recipe.items():
+            for robot in ["geode", "obsidian", "clay", "ore"]:
+                ingredients = recipe[robot]
                 can_build = True
                 for rock, count in ingredients.items():
                     if resources[rock] < count:
@@ -60,10 +123,35 @@ def do_recipe(recipe, robot_names, resource_names):
 def main(filename):
     recipes, robots, resources = read(filename)
     print(recipes)
-    print(robots)
-    print(resources)
+    #print(robots)
+    #print(resources)
 
-    do_recipe(recipes[1], robots, resources)
+    #do_recipe(recipes[1], robots, resources, 24)
+
+    G = ActionGraph(recipes[2], 24)
+    print(G.recipe_matrix)
+
+    initial_state = np.zeros(8, np.int32)
+    initial_state[4] = 1
+    actions = G[ActionNode(initial_state)]
+    for a in actions:
+        print(a)
+    actions = G[actions[0]]
+    for a in actions:
+        print(a)
+
+    def visit(G, u, minute, log):
+        #print("visiting ", u, minute, log.get("geode_max", 0))
+        log["geode_max"] = max(log.get("geode_max", 0), u.state[3])
+        if minute <= 0:
+            return
+        u_potential = u.state[:4] + minute * u.state[4:]
+        for v in G[u]:
+            visit(G, v, minute - 1, log)
+    log = {}
+    visit(G, ActionNode(initial_state), 24, log)
+    print(log)
+
 
 if __name__ == "__main__":
     import sys
