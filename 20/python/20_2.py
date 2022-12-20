@@ -3,20 +3,22 @@ import numpy as np
 
 
 def main(filename):
-    V = [int(v) for v in open(filename).read().splitlines()]
+    multiply = 811589153
+    V = [int(v) * multiply for v in open(filename).read().splitlines()]
     N = len(V)
     VP = [ i for i in range(len(V)) ]
     VP0 = VP.copy()
 
     debug = N < 10
 
-    for vp0 in VP0:
-        vpp_old = VP.index(vp0)
-        vpp_new = (vpp_old + V[vp0]) % (N - 1)
-        vpp = VP.pop(vpp_old)
-        VP.insert(vpp_new, vpp)
-        if debug:
-            print(f"{V[vp0]} moved : {[V[i] for i in VP]}, VP = {VP}")
+    for mix in range(10):
+        for vp0 in VP0:
+            vpp_old = VP.index(vp0)
+            vpp_new = (vpp_old + V[vp0]) % (N - 1)
+            vpp = VP.pop(vpp_old)
+            VP.insert(vpp_new, vpp)
+            if debug:
+                print(f"{V[vp0]} moved : {[V[i] for i in VP]}, VP = {VP}")
 
     VV = [ V[i] for i in VP ]
     i_0 = VV.index(0)
