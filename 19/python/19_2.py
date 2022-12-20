@@ -13,9 +13,8 @@ class ActionNode(object):
         return str(self.state)
 
 class ActionGraph(object):
-    def __init__(self, recipe, minutes):
+    def __init__(self, recipe):
         self.recipe = recipe
-        self.minutes = minutes
         self.kinds = ["ore", "clay", "obsidian", "geode"]
 
         recipe_matrix = np.zeros((len(self.kinds), len(self.kinds)), np.int32)
@@ -40,12 +39,6 @@ class ActionGraph(object):
                         continue
                     if u.state[4+build] * time_remaining + u.state[build] >= time_remaining * self.recipe_matrix[:, build].max():
                         continue
-                """
-                if build < 3 and np.all(u.state[4+build] >= self.recipe_matrix[:, build]):
-                    # we already have enough robot for making this type
-                    #print(f"already have {u.state[4+build]} robots of {self.kinds[build]}, recipe's max is {self.recipe_matrix[:,build]}")
-                    continue
-                """
 
                 ingredient = self.recipe_matrix[build, :]
                 ingredient_mask = ingredient > 0
@@ -98,57 +91,9 @@ def read(filename):
     return recipes, robots, resources
 
 
-def test(G):
-    initial_state = np.zeros(8 + 1, np.int32)
-    initial_state[4] = 1
-    initial_state[8] = 24
-    initial_state = np.array([2, 1, 1, 0, 1, 1, 1, 0, 24], np.int32)
-    actions = G[ActionNode(initial_state)]
-    for a in actions:
-        print(a)
-    return
-    for i in range(5):
-        print(actions[0])
-        actions = G[actions[0]]
-
-def test2(G):
-    """
-    node = ActionNode(np.array([2, 0, 0, 0, 1, 0, 0, 0, 22], np.int32))
-    print(f"From {node}")
-    for a in G[node]:
-        print(a)
-
-    node = ActionNode(np.array([2, 1, 0, 0, 1, 1, 0, 0, 20], np.int32))
-    print(f"From {node}")
-    for a in G[node]:
-        print(a)
-
-    node = ActionNode(np.array([2, 4, 0, 0, 1, 2, 0, 0, 18], np.int32))
-    print(f"From {node}")
-    for a in G[node]:
-        print(a)
-
-    node = ActionNode(np.array([4, 15, 0, 0, 1, 3, 0, 0, 14], np.int32))
-    print(f"From {node}")
-    for a in G[node]:
-        print(a)
-    """
-
-    node = ActionNode(np.array([2, 4, 0, 0, 1, 3, 1, 0, 13], np.int32))
-    print(f"From {node}")
-    for a in G[node]:
-        print(a)
-
-
 def main(filename):
     recipes, robots, resources = read(filename)
     print(recipes)
-
-    G = ActionGraph(recipes[1], 24)
-    print(G.recipe_matrix)
-
-    #test2(G)
-    #return
 
     def visit(G, u, log):
         geode_max = log.get("geode_max",0)
@@ -159,15 +104,16 @@ def main(filename):
         for v in G[u]:
             visit(G, v, log)
 
-    quality = 0
-    for i, recipe in recipes.items():
-        G = ActionGraph(recipes[i], 24)
+    minutes = 32
+    quality = 1
+    for i in [1, 2, 3]:
+        G = ActionGraph(recipes[i])
         initial_state = np.zeros(8 + 1, np.int32)
         initial_state[4] = 1
-        initial_state[8] = 24
+        initial_state[8] = minutes
         log = {"geode_max": 0}
         visit(G, ActionNode(initial_state), log)
-        quality += i * log["geode_max"]
+        quality *= log["geode_max"]
         print(log, quality)
 
 
