@@ -29,38 +29,35 @@ class ActionGraph(object):
         actions = []
 
         # where you build one kind of robot
-        can_build = []
+        build = [False] * 4
+        skip_no_build = False
         for kind in [3, 2, 1, 0]:
-            if np.all(u.state[:4] >= self.recipe_matrix[kind, :]):
-                can_build.append(kind)
-
-        if can_build:
-            build = can_build[:4]
-        else:
-            build = []
-        """
-        build = None
-        if u.state[7] == 0:
-            if u.state[6] == 0:
-                if u.state[5] == 0:
-                    build = 1  # clay
-                else:
-                    build = 2  # obs
+            ingredient = self.recipe_matrix[kind, :]
+            if np.all(u.state[:4] >= ingredient):
+                build[kind] = True
+            elif kind < 3 and np.all(u.state[4 + kind] >= self.recipe_matrix[:, kind]):
+                #print(f"no point building {kind} because {u.state[4+kind]} >= {self.recipe_matrix[:, kind]}")
+                build[kind] = False
             else:
-                build = 3 # geode
-        """
+                pass
 
-        for kind in build:
-            next_state = u.state.copy()
-            next_state[:4] -= self.recipe_matrix[kind, :]
-            next_state[4+kind] += 1
-            next_state[:4] += u.state[4:]
-            actions.append(ActionNode(next_state))
+        if u.state[8] > 1:
+            for kind in [3, 2, 1, 0]:
+                if not build[kind]:
+                    continue
+                next_state = u.state.copy()
+                next_state[:4] -= self.recipe_matrix[kind, :]
+                next_state[4+kind] += 1
+                next_state[:4] += u.state[4:8]
+                next_state[8] -= 1
+                actions.append(ActionNode(next_state))
 
         # where you don't build anything, just collect rocks
-        next_state = u.state.copy()
-        next_state[:4] += u.state[4:]
-        actions.append(ActionNode(next_state))
+        if True or not skip_no_build:
+            next_state = u.state.copy()
+            next_state[:4] += u.state[4:8]
+            next_state[8] -= 1
+            actions.append(ActionNode(next_state))
 
         return actions
 
@@ -128,11 +125,12 @@ def main(filename):
 
     #do_recipe(recipes[1], robots, resources, 24)
 
-    G = ActionGraph(recipes[2], 24)
+    G = ActionGraph(recipes[1], 24)
     print(G.recipe_matrix)
 
-    initial_state = np.zeros(8, np.int32)
+    initial_state = np.zeros(8 + 4, np.int32)
     initial_state[4] = 1
+    initial_state[8] = 24
     actions = G[ActionNode(initial_state)]
     for a in actions:
         print(a)
@@ -141,11 +139,11 @@ def main(filename):
         print(a)
 
     def visit(G, u, minute, log):
-        #print("visiting ", u, minute, log.get("geode_max", 0))
-        log["geode_max"] = max(log.get("geode_max", 0), u.state[3])
+        geode_max = log.get("geode_max",0)
+        print("visiting ", u, minute, geode_max)
+        log["geode_max"] = max(geode_max, u.state[3])
         if minute <= 0:
             return
-        u_potential = u.state[:4] + minute * u.state[4:]
         for v in G[u]:
             visit(G, v, minute - 1, log)
     log = {}
