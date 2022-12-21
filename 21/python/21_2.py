@@ -29,7 +29,6 @@ def test2(f):
 
 def main(filename):
     tree = read(filename)
-    print(tree)
 
     def visit(tree, node):
         data, children = tree[node]
@@ -57,25 +56,25 @@ def main(filename):
         v1, v2 = f(v)
         return v1 - v2
 
+    coef = 1e-2
     x1 = 1000
     x2 = 2 * x1
     g1 = g(x1)
     g2 = g(x2)
-    print("initial guess for Newton Method (damped secant method) = ", x1, x2, g1, g2)
-    coef = 1e-2
+    print(f"initial guess for Newton Method (secant method) with dx damped at {coef} = ", x1, x2, g1, g2)
     for i in range(10000):
         dx = - (g2 -g1) / (x2 - x1) * g2
-        if abs(dx) < 1.0:
-            break
         x3 = x2 + coef * dx
         g3 = g(x3)
-        print("x3 = ", x3, g3)
+        print(f"Iteration {i}: x3 = {x3}, g3 = {g3}")
+        if abs(g3) < 0.1:
+            break
         x1 = x2
         x2 = x3
         g1 = g2
         g2 = g3
 
-    answer = int(round(x2))
+    answer = int(round(x3))
     v1, v2 = f(answer)
     print(answer, v1, v2)
 
