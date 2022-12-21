@@ -1,3 +1,6 @@
+from collections import deque
+
+
 def read(filename):
     tree = {}
     with open(filename) as f:
@@ -14,18 +17,26 @@ def read(filename):
     return tree
 
 
-def test1(g):
-    print(g(1e12))
-    print(g(5e11))
-    print(g(1e10))
+def newton(g, x1, x2, coef, debug=False):
+    g1 = g(x1)
+    g2 = g(x2)
+    print(f"initial guess for Newton-Raphson iterations with underrelaxation with coef = {coef} = ", x1, x2, g1, g2)
+    for i in range(1000):
+        dx = - (g2 -g1) / (x2 - x1) * g2
+        x3 = x2 + coef * dx
+        g3 = g(x3)
+        if debug:
+            print(f"Iteration {i}: x3 = {x3}, g3 = {g3}")
+        if abs(g3) < 0.1:
+            break
 
-def test2(f):
-    v0 = 5e11
-    for i in range(100000):
-        v = v0 + 1e6 * i
-        f1, f2 = f(v)
-        print(v, f1, f2, f1 - f2)
-    return
+        x1 = x2
+        x2 = x3
+        g1 = g2
+        g2 = g3
+    answer = int(round(x3))
+    return answer, i
+
 
 def main(filename):
     tree = read(filename)
@@ -59,24 +70,18 @@ def main(filename):
     coef = 1e-2
     x1 = 1000
     x2 = 2 * x1
-    g1 = g(x1)
-    g2 = g(x2)
-    print(f"initial guess for Newton Method (secant method) with dx damped at {coef} = ", x1, x2, g1, g2)
-    for i in range(10000):
-        dx = - (g2 -g1) / (x2 - x1) * g2
-        x3 = x2 + coef * dx
-        g3 = g(x3)
-        print(f"Iteration {i}: x3 = {x3}, g3 = {g3}")
-        if abs(g3) < 0.1:
-            break
-        x1 = x2
-        x2 = x3
-        g1 = g2
-        g2 = g3
 
-    answer = int(round(x3))
-    v1, v2 = f(answer)
-    print(answer, v1, v2)
+    for trial in range(100):
+        try:
+            answer, iters = newton(g, x1, x2, coef)
+            v1, v2 = f(answer)
+            v1, v2 = int(v1), int(v2)
+            if v1 != v2:
+                raise ValueError
+            print(f"answer = {answer} after {iters} iterations, {v1} == {v2}? {v1==v2}")
+            break
+        except:
+            coef *= 0.5
 
 if __name__ == "__main__":
     import sys
