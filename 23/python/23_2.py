@@ -1,5 +1,6 @@
 import numpy as np
 from collections import defaultdict
+import pickle
 import logging
 
 
@@ -104,7 +105,8 @@ def dump(elves):
             line += c
         print(line)
 
-def main(filename):
+
+def main(filename, vis=False):
     elves = read(filename)
     dump(elves)
     print(f"  {len(elves)} elves")
@@ -112,16 +114,24 @@ def main(filename):
 
     first_choice = 0
 
+    if vis:
+        rounds = [elves.copy()]
+
     i = 1
     while True:
         print(f"Round {i}")
         elves, first_choice, moved = do_round(elves, first_choice)
         #dump(elves)
         print(f"  Round {i}, {moved} elves moved")
+        if vis:
+            rounds.append(elves.copy())
         if moved == 0:
             break
         i += 1
 
+    if vis:
+        f = open("elves.pkl", "wb")
+        pickle.dump(rounds, f)
 
 if __name__ == "__main__":
     import sys
