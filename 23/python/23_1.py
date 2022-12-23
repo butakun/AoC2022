@@ -31,6 +31,8 @@ def scan_around(elves, pos):
         can_move[2] = True  # West
     if np.all(nei[2, :] == 0):
         can_move[3] = True  # East
+    if all(can_move):
+        can_move = [False] * 4
 
     return can_move
 
@@ -75,7 +77,7 @@ def do_round(elves, first_choice):
     return new_elves, first_choice
 
 
-def dump(elves):
+def bounding_box(elves):
     elf = next(iter(elves))
     imin, jmin = elf
     imax, jmax = elf
@@ -84,6 +86,11 @@ def dump(elves):
         imax = max(imax, elf[0])
         jmin = min(jmin, elf[1])
         jmax = max(jmax, elf[1])
+    return imin, imax, jmin, jmax
+
+
+def dump(elves):
+    imin, imax, jmin, jmax = bounding_box(elves)
 
     for j in range(jmin, jmax + 1):
         line = ""
@@ -100,12 +107,16 @@ def main(filename):
 
     first_choice = 0
 
-    for i in range(3):
-        print(f"Round {i}")
+    for i in range(10):
+        print(f"Round {i+1}")
         elves, first_choice = do_round(elves, first_choice)
         dump(elves)
         print(f"  {len(elves)} elves")
 
+    imin, imax, jmin, jmax = bounding_box(elves)
+    area = (imax - imin + 1) * (jmax - jmin + 1)
+    empty = area - len(elves)
+    print(f"empty spots = {empty}")
 
 if __name__ == "__main__":
     import sys
