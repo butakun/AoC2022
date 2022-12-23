@@ -59,6 +59,9 @@ def main():
 
         old = elves
 
+    print("if you want to make a video yourself:")
+    print("ffmpeg -f image2 -i ./frame.%4d.jpg -b:v 4096k custom.mp4")
+
 
 if __name__ == "__main__":
     main()

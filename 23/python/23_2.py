@@ -134,5 +134,9 @@ def main(filename, vis=False):
         pickle.dump(rounds, f)
 
 if __name__ == "__main__":
-    import sys
-    main(sys.argv[1])
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("input")
+    parser.add_argument("--vis", action="store_true")
+    args = parser.parse_args()
+    main(args.input, vis=args.vis)
