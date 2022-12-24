@@ -1,5 +1,7 @@
 import numpy as np
 from collections import defaultdict
+import pickle
+import logging
 
 
 def read(filename):
@@ -43,7 +45,7 @@ def do_round(elves, first_choice):
 
     for pos in elves:
         can_move = scan_around(elves, pos)
-        print(f"Elf in {pos} can move in NSWE: {can_move}")
+        logging.info(f"Elf in {pos} can move in NSWE: {can_move}")
         if any(can_move):
             dstep = [(0,-1), (0,1), (-1,0), (1,0)]
             for iorder in range(4):
@@ -52,29 +54,33 @@ def do_round(elves, first_choice):
                     dp = dstep[inswe]
                     new_pos = (pos[0] + dp[0], pos[1] + dp[1]) 
                     proposed[new_pos].append(pos)
-                    print(f"  and proposed moving NSWE: {iorder} to {new_pos}")
+                    logging.info(f"  and proposed moving NSWE: {iorder} to {new_pos}")
                     break
         else:
             proposed[pos].append(pos)
-            print(f"  and proposed staying put at {pos}")
+            logging.info(f"  and proposed staying put at {pos}")
 
     # Second half
+    moved = 0
     new_elves = set()
     for new_pos, elves in proposed.items():
         if len(elves) > 1:
             for old_pos in elves:
                 assert old_pos not in new_elves
                 new_elves.add(old_pos)
-                print(f"Elf staying put at {old_pos}")
+                logging.info(f"Elf staying put at {old_pos}")
         else:
             assert new_pos not in new_elves
+            old_pos = elves[0]
             new_elves.add(new_pos)
-            print(f"Elf at {elves[0]} moved to {new_pos}")
+            if new_pos != old_pos:
+                moved += 1
+            logging.info(f"Elf at {elves[0]} moved to {new_pos}")
 
     # End
     first_choice = (first_choice + 1) % 4
 
-    return new_elves, first_choice
+    return new_elves, first_choice, moved
 
 
 def bounding_box(elves):
@@ -99,7 +105,8 @@ def dump(elves):
             line += c
         print(line)
 
-def main(filename):
+
+def main(filename, vis=False):
     elves = read(filename)
     dump(elves)
     print(f"  {len(elves)} elves")
@@ -107,17 +114,29 @@ def main(filename):
 
     first_choice = 0
 
-    for i in range(10):
-        print(f"Round {i+1}")
-        elves, first_choice = do_round(elves, first_choice)
-        dump(elves)
-        print(f"  {len(elves)} elves")
+    if vis:
+        rounds = [elves.copy()]
 
-    imin, imax, jmin, jmax = bounding_box(elves)
-    area = (imax - imin + 1) * (jmax - jmin + 1)
-    empty = area - len(elves)
-    print(f"empty spots = {empty}")
+    i = 1
+    while True:
+        print(f"Round {i}")
+        elves, first_choice, moved = do_round(elves, first_choice)
+        #dump(elves)
+        print(f"  Round {i}, {moved} elves moved")
+        if vis:
+            rounds.append(elves.copy())
+        if moved == 0:
+            break
+        i += 1
+
+    if vis:
+        f = open("elves.pkl", "wb")
+        pickle.dump(rounds, f)
 
 if __name__ == "__main__":
-    import sys
-    main(sys.argv[1])
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("input")
+    parser.add_argument("--vis", action="store_true")
+    args = parser.parse_args()
+    main(args.input, vis=args.vis)
