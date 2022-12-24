@@ -84,7 +84,7 @@ def dijkstra(G, src, is_dest, debug_freq=-1):
     return path, D[dest]
 
 
-def a_star(G, src, dest, H, debug_freq=-1):
+def a_star(G, src, is_dest, H, debug_freq=-1):
     pq = PriorityQueue()
     came_from = {src: None}
 
@@ -95,6 +95,7 @@ def a_star(G, src, dest, H, debug_freq=-1):
     fScore[src] = H(src)
 
     pq.push(src, priority=fScore[src])
+    dest = None
     iter = 0
     while True:
         try:
@@ -102,17 +103,15 @@ def a_star(G, src, dest, H, debug_freq=-1):
         except IndexError:
             break
         iter += 1
-        if u == dest:
+        if is_dest(u):
+            dest = u
             break
 
         if debug_freq > 0 and iter % debug_freq == 0:
             print(f"iter {iter}: gScore[u] = {gScore[u]}, fScore[u] = {fScore[u]}")
 
         for v in G[u]:
-            try:
-                v, weight = v[0], v[1]
-            except:
-                weight = 1
+            weight = 1
             g_temp = gScore[u] + weight
             if g_temp < gScore[v]:
                 f_temp = g_temp + H(v)
@@ -121,7 +120,7 @@ def a_star(G, src, dest, H, debug_freq=-1):
                 came_from[v] = u
                 pq.push(v, priority=f_temp)
 
-    if dest not in came_from:
+    if dest is None:
         # didn't reach dest
         return [], None 
 
