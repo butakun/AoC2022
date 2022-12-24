@@ -29,9 +29,10 @@ class ActionGraph(object):
                 actions.append((i_, j_, blizz_index_next))
         return actions
 
-    def is_dest(self, u):
-        blizz = self.blizzz[u[2]]
-        return u[0] == blizz.shape[0] - 1 and u[1] == blizz.shape[1] - 2
+    def get_is_dest_func(self):
+        blizz = self.blizzz[0]
+        idim, jdim = blizz.shape
+        return lambda u: u[0] == idim - 1 and u[1] == jdim - 2
 
 
 def blizzard_one_minute(grid):
@@ -125,7 +126,8 @@ def main(filename):
     for a in G[u]:
         print("action = ", a)
 
-    path, cost = dijkstra(G, u, debug_freq=1)
+    is_dest = G.get_is_dest_func()
+    path, cost = dijkstra(G, u, is_dest, debug_freq=1)
     print(path)
     print("cost = ", cost)
 
