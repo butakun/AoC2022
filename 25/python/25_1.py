@@ -24,28 +24,24 @@ def snafu_to_decimal(snafu):
     return decimal
 
 def decimal_to_snafu(decimal):
-    # first convert to base-5
-    base5 = []
+    snafu = []
     value = decimal
+    bump_next = 0
     while True:
         d = value % 5
-        base5.append(d)
-        value = value // 5
+        if d < 3:
+            bump_next = 0
+        elif d == 3:
+            d = -2
+            bump_next = 1
+        elif d == 4:
+            d = -1
+            bump_next = 1
+
+        snafu.append(d)
+        value = value // 5 + bump_next
         if value == 0:
             break
-
-    snafu = []
-    bump_next = 0
-    for b in base5:
-        b_ = b + bump_next
-        if b_ < 3:
-            snafu.append(b_)
-            bump_next = 0
-        else:
-            snafu.append(b_ - 5)
-            bump_next = 1
-    if bump_next == 1:
-        snafu.append(1)
 
     snafu_ = ""
     snafu.reverse()
@@ -99,6 +95,21 @@ if __name__ == "__main__":
 1 // 5 = 0
 -> 124030 in base-5
 0 -2 1 -1 -2 2 -> 2=-1=0
+
+4890 % 5 = 0
+4590 // 5 = 978
+978 % 5 = 3 -> -2 (+1)
+978 // 5 = 195
+196 % 5 = 1
+196 // 5 = 39
+39 % 5 = 4 = -1 (+1)
+39 // 5 = 7
+8 % 5 = 3 = -2 (+1)
+8 // 5 = 1
+2 % 5 = 2
+2 // 5 = 0
+0 +1 1 -1 -2 2
+
 
 16 decimal to binary
 16 % 2 = 0
